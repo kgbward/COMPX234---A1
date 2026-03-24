@@ -16,6 +16,8 @@ class Assignment1
     printList list = new printList();
 
     // Put any global variables here
+    private static Semaphore spaceAvaliable = new Semaphore(NUM_PRINTERS, NUM_MACHINES);
+    private static Mutex queueMutex = new Mutex();
 
 
     public void startSimulation()
@@ -27,8 +29,17 @@ class Assignment1
         // Create Machine and Printer threads
         
         // start the machine threads
+        for (int i = 0; i < NUM_MACHINES; i++){
+            mThreads.Add(new Thread(new machineThread(this, i).SetMachine));
+            mThreads[i].IsBackground = true;
+            mThreads[i].Start();
+        }
         
         //start the printer threads
+        for (int i = 0; i < NUM_PRINTERS; i++){
+            pThreads.Add(new Thread(new printerThread(this, i).SetPrinter));
+            pThreads[i].Start();
+        }
 
         // let the simulation run for some time
         sleep(SIMULATION_TIME);
@@ -37,7 +48,10 @@ class Assignment1
         sim_active = false;
 
         // Wait until all printer threads finish by using the joining them
-
+        foreach (Thread p in pThreads)
+        {
+            p.Join();
+        }
 
     }
 
@@ -83,6 +97,7 @@ class Assignment1
             Console.WriteLine("Printer ID:" + printerID + " : now available");
 
             // Write code here
+            queueMutex.WaitOne(); // Locks the queue
 
             // print from the queue
             list.queuePrint(list, printerID);
@@ -117,6 +132,11 @@ class Assignment1
                 machineSleep();
 
                 // machine wakes up and sends a print request
+                if (sim_active){
+                    isRequestSafe(machineID);
+                    printRequest(machineID);
+                    postRequest(machineID);
+                }
             }
         }
 
@@ -125,6 +145,8 @@ class Assignment1
             Console.WriteLine("Machine " + id + " Checking availability");
 
             // Write code here:
+            spaceAvaliable.WaitOne(); // Waits until there is enough/avaliable space in the queue
+            queueMutex.WaitOne(); // Locks the queue
 
             Console.WriteLine("Machine " + id + " will proceed");
         }
@@ -145,6 +167,8 @@ class Assignment1
             Console.WriteLine("Machine " + id + " Releasing binary semaphore");
 
             // Write code here
+            spaceAvaliable.Release(); // Releases the printers and machines 
+            queueMutex.ReleaseMutex(); // Releases the lock on the device
         }
 
         public void machineSleep()
