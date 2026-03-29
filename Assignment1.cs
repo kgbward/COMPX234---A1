@@ -16,7 +16,7 @@ class Assignment1
     printList list = new printList();
 
     // Put any global variables here
-    private static Semaphore spaceAvaliable = new Semaphore(NUM_PRINTERS, NUM_MACHINES);
+    private static Semaphore spaceAvaliable = new Semaphore(NUM_PRINTERS, NUM_PRINTERS);
     private static Mutex queueMutex = new Mutex();
 
 
@@ -75,6 +75,11 @@ class Assignment1
                 printerSleep();
 
                 // Grab the request at the head of the queue and print it
+                if (sim_active)
+                {
+                    printDox(printerID);
+                }
+                
             }
         }
 
@@ -100,12 +105,18 @@ class Assignment1
             queueMutex.WaitOne(); // Locks the queue
 
             // print from the queue
-            list.queuePrint(list, printerID);
+            if (list.head != null)
+            {
+                list.queuePrint(list, printerID);
+                queueMutex.ReleaseMutex();
+                spaceAvaliable.Release(); 
 
-            // Write code here
-
+            }
+            else
+            {
+                queueMutex.ReleaseMutex();
+            }
         }
-
         private printList list
         {
             get { return outer.list; }
@@ -146,8 +157,7 @@ class Assignment1
 
             // Write code here:
             spaceAvaliable.WaitOne(); // Waits until there is enough/avaliable space in the queue
-            queueMutex.WaitOne(); // Locks the queue
-
+            
             Console.WriteLine("Machine " + id + " will proceed");
         }
 
@@ -156,10 +166,12 @@ class Assignment1
             Console.WriteLine("Machine " + id + " Sending a print request");
 
             // Build a print document
+            queueMutex.WaitOne(); // Locks the queue
             printDoc doc = new printDoc("My name is machine " + id, id);
 
             // Insert it in print queue
             outer.list = outer.list.queueInsert(outer.list, doc);
+            queueMutex.ReleaseMutex();
         }
 
         public void postRequest(int id)
@@ -167,8 +179,6 @@ class Assignment1
             Console.WriteLine("Machine " + id + " Releasing binary semaphore");
 
             // Write code here
-            spaceAvaliable.Release(); // Releases the printers and machines 
-            queueMutex.ReleaseMutex(); // Releases the lock on the device
         }
 
         public void machineSleep()
