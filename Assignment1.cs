@@ -104,6 +104,8 @@ class Assignment1
             // Write code here
             queueMutex.WaitOne(); // Locks the queue
             
+            // Uses a try finally to run code. if there is a prrinter with too many requests it will 
+            // run finally and restart at try
             try
             {
                 // Grab the request at the head of the queue and print it
@@ -115,7 +117,7 @@ class Assignment1
             }
             finally
             {
-                 queueMutex.ReleaseMutex(); // Always releases, even if an exception occurs
+                queueMutex.ReleaseMutex(); // Always releases, even if an exception occurs
             }
 
         }
