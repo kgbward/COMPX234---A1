@@ -74,7 +74,7 @@ class Assignment1
                 // Simulate printer taking some time to print the document
                 printerSleep();
 
-                // Grab the request at the head of the queue and print it
+                // Grab the request and print it
                 if (sim_active)
                 {
                     printDox(printerID);
@@ -103,19 +103,21 @@ class Assignment1
 
             // Write code here
             queueMutex.WaitOne(); // Locks the queue
-
-            // print from the queue
-            if (list.head != null)
+            
+            try
             {
-                list.queuePrint(list, printerID);
-                queueMutex.ReleaseMutex();
-                spaceAvaliable.Release(); 
-
+                // Grab the request at the head of the queue and print it
+                if (list.head != null)
+                {
+                    list.queuePrint(list, printerID);
+                    spaceAvaliable.Release();
+                }
             }
-            else
+            finally
             {
-                queueMutex.ReleaseMutex();
+                 queueMutex.ReleaseMutex(); // Always releases, even if an exception occurs
             }
+
         }
         private printList list
         {
@@ -144,9 +146,9 @@ class Assignment1
 
                 // machine wakes up and sends a print request
                 if (sim_active){
-                    isRequestSafe(machineID);
-                    printRequest(machineID);
-                    postRequest(machineID);
+                    isRequestSafe(machineID); // Calls this code to run
+                    printRequest(machineID); // Calls this code to run
+                    postRequest(machineID); // Calls this code to run
                 }
             }
         }
