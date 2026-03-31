@@ -16,8 +16,8 @@ class Assignment1
     printList list = new printList();
 
     // Put any global variables here
-    private static Semaphore spaceAvaliable = new Semaphore(NUM_PRINTERS, NUM_PRINTERS);
-    private static Mutex queueMutex = new Mutex();
+    private static Semaphore spaceAvaliable = new Semaphore(NUM_PRINTERS, NUM_PRINTERS);  // Checks for number of empty spaces in the queue
+    private static Mutex queueMutex = new Mutex(); // Ensures that the current state of the queue cannot be comprimise in any way
 
 
     public void startSimulation()
